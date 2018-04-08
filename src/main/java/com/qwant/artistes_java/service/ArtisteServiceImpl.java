@@ -43,7 +43,7 @@ public class ArtisteServiceImpl implements ArtisteService {
 	}
 
 	@Override
-	public ArtisteDto getArtisteById(final long artisteId) throws IllegalArgumentException {
+	public ArtisteDto getArtisteById(final long artisteId) {
 		final Optional<Artiste> optArtiste = artisteRepository.findById(artisteId);
 		if (!optArtiste.isPresent()) {
 			throw new CustomException(String.format("No artiste found with id = %d", artisteId));
@@ -52,24 +52,27 @@ public class ArtisteServiceImpl implements ArtisteService {
 	}
 
 	@Override
-	public ArtisteDto updateArtiste(final ArtisteDto artisteDto) throws IllegalArgumentException {
-		final Optional<Artiste> optArtiste = artisteRepository.findById(artisteDto.getId());
-		if (!optArtiste.isPresent()) {
-			throw new CustomException(String.format("No artiste found with id = %d", artisteDto.getId()));
+	public ArtisteDto updateArtiste(final ArtisteDto artisteDto) {
+		try {
+			final Optional<Artiste> optArtiste = artisteRepository.findById(artisteDto.getId());
+			if (!optArtiste.isPresent()) {
+				throw new CustomException(String.format("No artiste found with id = %d", artisteDto.getId()));
+			}
+			Artiste artisteToUpdate = optArtiste.get();
+			artisteToUpdate.setFirstname(artisteDto.getFirstname());
+			artisteToUpdate.setLastname(artisteDto.getLastname());
+			artisteToUpdate.setBiography(artisteDto.getBiography());
+			artisteToUpdate.setBirthdate(artisteDto.getBirthdate());
+			final Artiste savedArtiste = artisteRepository.save(artisteToUpdate);
+			return populateArtisteDto(savedArtiste);
+		} catch (IllegalArgumentException e) {
+			throw new CustomException("id is mandatory to update artiste");
 		}
-		Artiste artisteToUpdate = optArtiste.get();
-		artisteToUpdate.setFirstname(artisteDto.getFirstname());
-		artisteToUpdate.setLastname(artisteDto.getLastname());
-		artisteToUpdate.setBiography(artisteDto.getBiography());
-		artisteToUpdate.setBirthdate(artisteDto.getBirthdate());
-		final Artiste savedArtiste = artisteRepository.save(artisteToUpdate);
-		return populateArtisteDto(savedArtiste);
 	}
 
 	@Override
-	public void deleteArtisteById(final long artisteId) throws IllegalArgumentException {
+	public void deleteArtisteById(final long artisteId) {
 		final String picUrl = artisteRepository.getPicUrlByArtisteId(artisteId);
-		logger.info(picUrl);
 		if (picUrl != null) {
 			File pic = new File(picUrl);
 			if (pic.exists()) {
@@ -108,7 +111,6 @@ public class ArtisteServiceImpl implements ArtisteService {
 		result.setLastname(artisteDto.getLastname());
 		result.setBiography(artisteDto.getBiography());
 		result.setBirthdate(artisteDto.getBirthdate());
-		result.setPicUrl(artisteDto.getPicUrl());
 		return result;
 	}
 
